@@ -16,11 +16,11 @@ DATA_DIR = BASE_DIR / "animalImages"
 
 #Image configs for training
 IMG_SIZE = (224, 224)
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 SEED = 123
 
 #training amount
-EPOCHS = 100
+EPOCHS = 30
 
 #training the model
 #trainig data set that is used to teach the model patterns
@@ -33,7 +33,7 @@ trainDS = tf.keras.utils.image_dataset_from_directory(
     batch_size = BATCH_SIZE
 )
 
-#validation data set that is used to fine-tune the models settings
+#validation data set that is used to fine-tune the model settings
 valDS = tf.keras.utils.image_dataset_from_directory(
     DATA_DIR,
     validation_split = 0.2,
@@ -73,7 +73,7 @@ else:
 
         #building neurons
         tf.keras.layers.Dense(128, activation = "relu"), #"shrinks" vector to 128 new numbers by combining them and doing magic with predetermined weights using relu
-        tf.keras.layers.Dropout(0.5), #takes away 50% of the units randomly to improve generalization and forces the model to be robust
+        tf.keras.layers.Dropout(0.3), #takes away 30% of the units randomly to improve generalization and forces the model to be robust
 
         #assigning probability
         tf.keras.layers.Dense(numClasses, activation = "softmax") #converts raw values into 90 probabilities(all values sum to 1)
@@ -82,7 +82,7 @@ else:
 #compiling the model(rules for training)
 model.compile(
     #Adam updates the weights
-    optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3),
+    optimizer = tf.keras.optimizers.Adam(learning_rate = 3e-3),
     #compares multiple "classes" probabilities with the correct answer
     loss = "sparse_categorical_crossentropy",
     #percent of predicitons where the top predicted class equals the correct label
