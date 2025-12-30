@@ -1,9 +1,6 @@
-import tensorflow as tf
+import os
+import numpy as np
+import keras
+from keras import layers
+from tensorflow import data as tf_data
 
-tensor = tf.constant("Michael Dont Leave Me Here")
-print(tensor.numpy().decode())
-
-hello = tf.constant("Hello world")
-
-output = hello.numpy()
-print(output.decode())
