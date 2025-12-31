@@ -7,7 +7,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "animalImages"
 MODEL_PATH = BASE_DIR / "animal_detector_mobilenet.keras"
-TEST_IMAGE_PATH = BASE_DIR / "test_bear.jpg"
+TEST_IMAGE_PATH = BASE_DIR / "test.jpg"
 
 #image and training configuration
 IMG_SIZE = (224, 224)
