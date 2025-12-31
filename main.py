@@ -20,7 +20,7 @@ BATCH_SIZE = 64
 SEED = 123
 
 #training amount
-EPOCHS = 30
+EPOCHS = 100
 
 #training the model
 #trainig data set that is used to teach the model patterns
