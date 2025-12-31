@@ -20,7 +20,10 @@ BATCH_SIZE = 64
 SEED = 123
 
 #training amount
-EPOCHS = 100
+EPOCHS = 40
+
+#saved data from previous training
+MODEL_PATH = BASE_DIR / "animal_detector_v2.keras"
 
 #training the model
 #trainig data set that is used to teach the model patterns
@@ -43,14 +46,9 @@ valDS = tf.keras.utils.image_dataset_from_directory(
     batch_size = BATCH_SIZE
 )
 
-#saved data from previous training
-MODEL_PATH = BASE_DIR / "animal_detector.keras"
-
-#stores the names of the data set into animal_names alphabetically
 animalNames = trainDS.class_names
 numClasses = len(animalNames)
 
-#performance optimizations
 AUTOTUNE = tf.data.AUTOTUNE
 trainDS = trainDS.cache().shuffle(1000, seed=SEED).prefetch(AUTOTUNE)
 valDS = valDS.cache().prefetch(AUTOTUNE)
@@ -66,16 +64,25 @@ else:
 
         #mapping and efficiency
         #utilizes Conv2d, set to using 32 different filters for every 3x3 pixel grid while using relu to create feature maps
-        tf.keras.layers.Conv2D(32, (3, 3), activation = "relu"),
+        tf.keras.layers.Conv2D(32, (3, 3), padding = "same", use_bias = False),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Activation("relu"),
         #takes the most prominent patterns from a 2x2 pixel the feature map for efficiency
         tf.keras.layers.MaxPooling2D((2,2)), 
         
         # second convolutional layer
-        tf.keras.layers.Conv2D(64, (3, 3), activation="relu"),
-        tf.keras.layers.MaxPooling2D((2,2)),
+        tf.keras.layers.Conv2D(64, (3, 3), padding = "same", use_bias = False),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Activation("relu"),
+        #takes the most prominent patterns from a 2x2 pixel the feature map for efficiency
+        tf.keras.layers.MaxPooling2D((2,2)), 
 
         # third convolutional layer
-        tf.keras.layers.Conv2D(128, (3, 3), activation="relu"),
+        tf.keras.layers.Conv2D(128, (3, 3), padding="same", use_bias=False),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Activation("relu"),
+        tf.keras.layers.MaxPooling2D((2, 2)),
+
         tf.keras.layers.GlobalAveragePooling2D(), #efficiency
 
         #building neurons
@@ -89,7 +96,7 @@ else:
 #compiling the model(rules for training)
 model.compile(
     #Adam updates the weights
-    optimizer = tf.keras.optimizers.Adam(learning_rate = 3e-3),
+    optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3),
     #compares multiple "classes" probabilities with the correct answer
     loss = "sparse_categorical_crossentropy",
     #percent of predicitons where the top predicted class equals the correct label
@@ -149,11 +156,10 @@ for images, labels in valDS.take(1):
     plt.show()
 
 #loads the previously saved model
-loaded_model = tf.keras.models.load_model(BASE_DIR / "animal_detector.keras")
-loaded_labels = (BASE_DIR / "animalNames.txt").read_text(encoding="utf-8").splitlines()
+loaded_model = tf.keras.models.load_model(BASE_DIR / "animal_detector_v2.keras")
 
 #checks for prediction
 for images, labels in valDS.take(1):
     preds = loaded_model.predict(images)
     pred_idx = int(np.argmax(preds[0]))
-    print("\nLoaded model predicts:", loaded_labels[pred_idx])
+    print("\nLoaded model predicts:", animalNames[pred_idx])
