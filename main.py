@@ -69,11 +69,18 @@ else:
         tf.keras.layers.Conv2D(32, (3, 3), activation = "relu"),
         #takes the most prominent patterns from a 2x2 pixel the feature map for efficiency
         tf.keras.layers.MaxPooling2D((2,2)), 
+        
+        # second convolutional layer
+        tf.keras.layers.Conv2D(64, (3, 3), activation="relu"),
+        tf.keras.layers.MaxPooling2D((2,2)),
+
+        # third convolutional layer
+        tf.keras.layers.Conv2D(128, (3, 3), activation="relu"),
         tf.keras.layers.GlobalAveragePooling2D(), #efficiency
 
         #building neurons
         tf.keras.layers.Dense(128, activation = "relu"), #"shrinks" vector to 128 new numbers by combining them and doing magic with predetermined weights using relu
-        tf.keras.layers.Dropout(0.3), #takes away 30% of the units randomly to improve generalization and forces the model to be robust
+        tf.keras.layers.Dropout(0.5), #takes away 50% of the units randomly to improve generalization and forces the model to be robust
 
         #assigning probability
         tf.keras.layers.Dense(numClasses, activation = "softmax") #converts raw values into 90 probabilities(all values sum to 1)
