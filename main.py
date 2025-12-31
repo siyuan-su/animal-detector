@@ -20,10 +20,10 @@ BATCH_SIZE = 64
 SEED = 123
 
 #training amount
-EPOCHS = 40
+EPOCHS = 25
 
 #saved data from previous training
-MODEL_PATH = BASE_DIR / "animal_detector_v2.keras"
+MODEL_PATH = BASE_DIR / "animal_detector_v3.keras"
 
 #training the model
 #trainig data set that is used to teach the model patterns
@@ -87,7 +87,7 @@ else:
 
         #building neurons
         tf.keras.layers.Dense(128, activation = "relu"), #"shrinks" vector to 128 new numbers by combining them and doing magic with predetermined weights using relu
-        tf.keras.layers.Dropout(0.5), #takes away 50% of the units randomly to improve generalization and forces the model to be robust
+        tf.keras.layers.Dropout(0.6), #takes away 50% of the units randomly to improve generalization and forces the model to be robust
 
         #assigning probability
         tf.keras.layers.Dense(numClasses, activation = "softmax") #converts raw values into 90 probabilities(all values sum to 1)
@@ -96,7 +96,7 @@ else:
 #compiling the model(rules for training)
 model.compile(
     #Adam updates the weights
-    optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3),
+    optimizer = tf.keras.optimizers.Adam(learning_rate = 3e-4),
     #compares multiple "classes" probabilities with the correct answer
     loss = "sparse_categorical_crossentropy",
     #percent of predicitons where the top predicted class equals the correct label
@@ -156,7 +156,7 @@ for images, labels in valDS.take(1):
     plt.show()
 
 #loads the previously saved model
-loaded_model = tf.keras.models.load_model(BASE_DIR / "animal_detector_v2.keras")
+loaded_model = tf.keras.models.load_model(BASE_DIR / "animal_detector_v3.keras")
 
 #checks for prediction
 for images, labels in valDS.take(1):
