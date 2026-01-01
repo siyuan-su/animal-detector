@@ -3,20 +3,20 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-# resolve project paths
+#resolve project paths
 base_dir = Path(__file__).resolve().parent
 data_dir = base_dir / "animalImages"
 model_path = base_dir / "animal_detector_mobilenet.keras"
-test_image_path = base_dir / "test.jpg"
+test_image_path = base_dir / "testSquirrel.jpg"
 
-# config
-img_size = (224, 224)
+#config
+img_size = (320, 320)
 batch_size = 64
 seed = 123
 epochs_head = 8
 epochs_fine = 5
 
-# set false to load if model exists
+#set false to load if model exists
 force_retrain = False
 
 loaded = False
@@ -28,7 +28,7 @@ if model_path.exists() and not force_retrain:
     loaded = True
 
 else:
-    # build datasets only if training
+    #build datasets only if training
     train_ds = tf.keras.utils.image_dataset_from_directory(
         data_dir,
         validation_split=0.2,
@@ -50,15 +50,15 @@ else:
     animal_names = train_ds.class_names
     num_classes = len(animal_names)
 
-    # build base model
+    #build base model
     base_model = tf.keras.applications.MobileNetV2(
-        input_shape=(224, 224, 3),
+        input_shape=(320, 320, 3),
         include_top=False,
         weights="imagenet"
     )
 
-    # build full model
-    inputs = tf.keras.Input(shape=(224, 224, 3))
+    #build full model
+    inputs = tf.keras.Input(shape=(320, 320, 3))
     x = tf.keras.applications.mobilenet_v2.preprocess_input(inputs)
     x = base_model(x)
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
@@ -66,19 +66,20 @@ else:
     outputs = tf.keras.layers.Dense(num_classes, activation="softmax")(x)
     model = tf.keras.Model(inputs, outputs)
 
-    # phase 1: head training
+    #phase 1: head training
     base_model.trainable = False
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"]
     )
+
     model.fit(train_ds, validation_data=val_ds, epochs=epochs_head, verbose=1)
 
-    # phase 2: fine-tune top layers
+    #phase 2: fine-tune top layers
     base_model.trainable = True
 
-    # keep batchnorm frozen for stability
+    #keep batchnorm frozen for stability
     for layer in base_model.layers:
         if isinstance(layer, tf.keras.layers.BatchNormalization):
             layer.trainable = False
