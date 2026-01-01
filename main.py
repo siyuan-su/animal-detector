@@ -72,7 +72,7 @@ else:
 
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
-        loss="sparse_categorical_crossentropy",
+        loss="sparse_categorical_crossentrgopy",
         metrics=["accuracy"]
     )
 
