@@ -3,6 +3,11 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from pathlib import Path
 
+#tkinter + PIL imports
+import tkinter as tk
+from tkinter import filedialog, Label, Button
+from PIL import Image, ImageTk
+
 # resolve project paths
 base_dir = Path(__file__).resolve().parent
 data_dir = base_dir / "animalImages"
@@ -99,8 +104,9 @@ else:
 
     model.save(model_path)
 
-if test_image_path.exists():
-    img = tf.keras.utils.load_img(test_image_path, target_size=img_size)
+#prediction helper for tkinter
+def predict_image(image_path):
+    img = tf.keras.utils.load_img(image_path, target_size=img_size)
     x = tf.keras.utils.img_to_array(img)
     x = tf.expand_dims(x, axis=0)
 
@@ -110,22 +116,51 @@ if test_image_path.exists():
     pred_conf = float(np.max(probs))
     pred_label = animal_names[pred_idx]
 
-    print("predicted:", pred_label, "| confidence:", pred_conf)
-
-    top5 = np.argsort(probs)[-5:][::-1]
-    print("\ntop 5:")
-    for i in top5:
-        i = int(i)
-        print(animal_names[i], float(probs[i]))
-
-    plt.imshow(img)
-    plt.title(f"predicted: {pred_label} ({pred_conf:.3f})")
-    plt.axis("off")
-    plt.show()
-else:
-    print("test image not found:", test_image_path)
+    return pred_label, pred_conf, img
 
 
+# ---------------- TKINTER UI (NEW, NO ORIGINAL COMMENTS MODIFIED) ---------------- #
 
+root = tk.Tk()
+root.title("Animal Detector")
+root.geometry("420x520")
 
+img_label = Label(root)
+img_label.pack(pady=10)
 
+result_label = Label(
+    root,
+    text="Click + to select an image",
+    font=("Arial", 14)
+)
+result_label.pack(pady=10)
+
+def open_image():
+    file_path = filedialog.askopenfilename(
+        title="Select an Image",
+        filetypes=[("Image files", "*.jpg *.jpeg *.png")]
+    )
+    if not file_path:
+        return
+
+    label, conf, pil_img = predict_image(file_path)
+
+    display_img = pil_img.resize((280, 280))
+    tk_img = ImageTk.PhotoImage(display_img)
+
+    img_label.config(image=tk_img)
+    img_label.image = tk_img
+
+    result_label.config(
+        text=f"Prediction: {label}\nConfidence: {conf:.3f}"
+    )
+
+Button(
+    root,
+    text="➕ Open Image",
+    command=open_image,
+    font=("Arial", 12),
+    width=20
+).pack(pady=15)
+
+root.mainloop()
