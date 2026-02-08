@@ -7,7 +7,7 @@ from pathlib import Path
 base_dir = Path(__file__).resolve().parent
 data_dir = base_dir / "animalImages"
 model_path = base_dir / "animal_detector_mobilenet.keras"
-test_image_path = base_dir / "testSquirrel.jpg"
+test_image_path = base_dir / "testBiscuit.jpg"
 
 #config
 img_size = (320, 320)
@@ -125,8 +125,3 @@ if test_image_path.exists():
     plt.show()
 else:
     print("test image not found:", test_image_path)
-
-
-
-
-
