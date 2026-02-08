@@ -1,109 +1,47 @@
 import numpy as np
 import tensorflow as tf
-import matplotlib.pyplot as plt
 from pathlib import Path
 
-#tkinter + PIL imports
+# tkinter + PIL imports
 import tkinter as tk
 from tkinter import filedialog, Label, Button
 from PIL import Image, ImageTk
 
-# resolve project paths
+
+# -----------------------------
+# Paths
+# -----------------------------
 base_dir = Path(__file__).resolve().parent
 data_dir = base_dir / "animalImages"
 model_path = base_dir / "animal_detector_mobilenet.keras"
 
-# config
-img_size = (224, 224)
-batch_size = 64
-seed = 123
-epochs_head = 8
-epochs_fine = 5
+# -----------------------------
+# Load model ONLY (no training)
+# -----------------------------
+if not model_path.exists():
+    raise FileNotFoundError(
+        f"Model not found:\n{model_path}\n"
+        f"You said you don't want retraining, so place your saved model here."
+    )
 
-# set false to load if model exists
-force_retrain = False
+model = tf.keras.models.load_model(model_path)
 
-loaded = False
-model = None
+# ⭐ Automatically adapt to model input size
+h, w = model.input_shape[1], model.input_shape[2]
+img_size = (int(h), int(w))
+
+# Build class names from folder structure
 animal_names = sorted([p.name for p in data_dir.iterdir() if p.is_dir()])
 
-if model_path.exists() and not force_retrain:
-    model = tf.keras.models.load_model(model_path)
-    loaded = True
+print("Model loaded")
+print("Expected input:", model.input_shape)
+print("Using img_size:", img_size)
+print("Classes detected:", len(animal_names))
 
-else:
-    # build datasets only if training
-    train_ds = tf.keras.utils.image_dataset_from_directory(
-        data_dir,
-        validation_split=0.2,
-        subset="training",
-        seed=seed,
-        image_size=img_size,
-        batch_size=batch_size
-    )
 
-    val_ds = tf.keras.utils.image_dataset_from_directory(
-        data_dir,
-        validation_split=0.2,
-        subset="validation",
-        seed=seed,
-        image_size=img_size,
-        batch_size=batch_size
-    )
-
-    animal_names = train_ds.class_names
-    num_classes = len(animal_names)
-
-    # build base model
-    base_model = tf.keras.applications.MobileNetV2(
-        input_shape=(224, 224, 3),
-        include_top=False,
-        weights="imagenet"
-    )
-
-    # build full model
-    inputs = tf.keras.Input(shape=(224, 224, 3))
-    x = tf.keras.applications.mobilenet_v2.preprocess_input(inputs)
-    x = base_model(x)
-    x = tf.keras.layers.GlobalAveragePooling2D()(x)
-    x = tf.keras.layers.Dropout(0.3)(x)
-    outputs = tf.keras.layers.Dense(num_classes, activation="softmax")(x)
-    model = tf.keras.Model(inputs, outputs)
-
-    # phase 1: head training
-    base_model.trainable = False
-    model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
-        loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"]
-    )
-    model.fit(train_ds, validation_data=val_ds, epochs=epochs_head, verbose=1)
-
-    # phase 2: fine-tune top layers
-    base_model.trainable = True
-
-    # keep batchnorm frozen for stability
-    for layer in base_model.layers:
-        if isinstance(layer, tf.keras.layers.BatchNormalization):
-            layer.trainable = False
-
-    n_unfreeze = 20
-    for layer in base_model.layers[:-n_unfreeze]:
-        layer.trainable = False
-    for layer in base_model.layers[-n_unfreeze:]:
-        if not isinstance(layer, tf.keras.layers.BatchNormalization):
-            layer.trainable = True
-
-    model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=3e-6),
-        loss="sparse_categorical_crossentropy",
-        metrics=["accuracy"]
-    )
-    model.fit(train_ds, validation_data=val_ds, epochs=epochs_fine, verbose=1)
-
-    model.save(model_path)
-
-#prediction helper for tkinter
+# -----------------------------
+# Prediction
+# -----------------------------
 def predict_image(image_path):
     img = tf.keras.utils.load_img(image_path, target_size=img_size)
     x = tf.keras.utils.img_to_array(img)
@@ -118,11 +56,22 @@ def predict_image(image_path):
     return pred_label, pred_conf, img
 
 
-# ---------------- TKINTER UI (NEW, NO ORIGINAL COMMENTS MODIFIED) ---------------- #
-
+# -----------------------------
+# Tkinter UI
+# -----------------------------
 root = tk.Tk()
 root.title("Animal Detector")
-root.geometry("420x520")
+root.geometry("420x560")
+
+title_label = Label(root, text="Animal Detector", font=("Arial", 16, "bold"))
+title_label.pack(pady=(10, 0))
+
+sub_label = Label(
+    root,
+    text=f"Model input size: {img_size[0]}×{img_size[1]}",
+    font=("Arial", 11)
+)
+sub_label.pack(pady=(0, 10))
 
 img_label = Label(root)
 img_label.pack(pady=10)
@@ -130,9 +79,11 @@ img_label.pack(pady=10)
 result_label = Label(
     root,
     text="Click + to select an image",
-    font=("Arial", 14)
+    font=("Arial", 14),
+    justify="center"
 )
 result_label.pack(pady=10)
+
 
 def open_image():
     file_path = filedialog.askopenfilename(
@@ -151,8 +102,9 @@ def open_image():
     img_label.image = tk_img
 
     result_label.config(
-        text=f"Prediction: {label}\nConfidence: {conf:.3f}"
+        text=f"Prediction: {label}\nConfidence: {conf*100:.2f}%"
     )
+
 
 Button(
     root,
