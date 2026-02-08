@@ -12,7 +12,6 @@ from PIL import Image, ImageTk
 base_dir = Path(__file__).resolve().parent
 data_dir = base_dir / "animalImages"
 model_path = base_dir / "animal_detector_mobilenet.keras"
-test_image_path = base_dir / "test.jpg"
 
 # config
 img_size = (224, 224)
